@@ -96,7 +96,6 @@ function Buttons(props){
        >
         =
       </button>
-      
       <button
       onClick={props.inputKey}
        id="zero"
@@ -109,20 +108,16 @@ function Buttons(props){
        class="small">
         .
       </button>
-      
-
     </div>
   )
 }
 
-
-
 function Display(props){
   return (
     <div id="down"> 
-    <div id="up">{props.output}</div>
-    <div id="display">{props.input}</div>
-     </div>
+      <div id="up">{props.output}</div>
+      <div id="display">{props.input}</div>
+    </div>
   )
 }
 
@@ -137,7 +132,9 @@ class Calculator extends React.Component{
       prev:"",
       message:false,
       dot:false,
-      result:""
+      result:"",
+      prevIsNumber:false,
+      prevOperator:""
       
     }
     this.clear=this.clear.bind(this)
@@ -148,120 +145,123 @@ class Calculator extends React.Component{
   }
   
   evaluate(){
+    let b=this.state.output.slice(
+      this.state.output.lastIndexOf("=")+1,this.state.output.length
+      )
 
-    let cuenta=eval(this.state.output)
-   // let a=cuenta.split("").map(item=>isNaN(item)?item:Number(item))
-   
-    console.log(eval(cuenta))
-
-this.setState({
-  
-  output:this.state.output.concat("="+cuenta),
-  input:cuenta
-})
+    let cuenta=eval(b.replace(/[-]{2}|[+]{2}/g, '+'))
+    this.setState({
+      output:this.state.output.concat("="+cuenta),
+      input:cuenta
+    })
   }
+
   operator(e){
     let keyPressed=(e.target.innerText)
+    
+    if(!this.state.prevIsNumber){
+      if(this.state.prevOperator==="-"&&keyPressed==="+"){
+        this.setState((state)=>({
+           input:keyPressed,
+           output:state.output.slice(0,state.output.slice.length-1),
+           dot:false,
+           prevIsNumber:false,
+           prevOperator:keyPressed
+          })
+        )
+      }
 
-    this.setState({
+    }
+
+    this.setState((state)=>({
       input:keyPressed,
-      output:this.state.output.concat(keyPressed),
-      dot:false
-    })
-
+      output:state.output.concat(keyPressed),
+      dot:false,
+      prevIsNumber:false,
+      prevOperator:keyPressed
+      })
+    )
   }
 
   clear(){
-    this.setState((state)=>{
-      return {
+    this.setState((state)=>({
       input:"0",
       output:"",
       limit:false,
-      dot:false
-     
-    };
-    })
-  };
+      dot:false,
+      prevIsNumber:false,
+      prevOperator:""
+      })
+    )
+  }
 
   inputKey(e){
     //MENSAJE LIMITE DE CARACTERES
     if (this.state.input.length===11&&this.state.message===false){
-    return this.limitReach()
+      return this.limitReach()
     }
 
     if(this.state.limit===false){
       let keyPressed=(e.target.innerText)
       let regex=/^[0+-/*]+/g;
       
+        if(keyPressed==="."){
+          this.setState({
+            dot:true
+          })
+        }
 
-      if(keyPressed==="."){
-        this.setState({
-          dot:true
-        })
-      }
+      if(!this.state.dot||(this.state.dot&&keyPressed!=="."))
 
-   if(!this.state.dot||(this.state.dot&&keyPressed!=="."))
-
-      if(regex.test(this.state.input)){
-        this.setState((state)=>({
-          input:keyPressed,
-          output:state.output.concat(keyPressed)
-        }))
-      }else {
-        this.setState((state)=>({
-          input:state.input.concat(keyPressed),
-          output:state.output.concat(keyPressed)
-      }))
-      }
-
-   
-
-     
- 
+        if(regex.test(this.state.input)){
+         this.setState((state)=>({
+            input:keyPressed,
+            output:state.output.concat(keyPressed),
+            prevIsNumber:true
+            })
+          )
+        } else {
+          this.setState((state)=>({
+           input:state.input.concat(keyPressed),
+           output:state.output.concat(keyPressed),
+           prevIsNumber:true
+           })
+          )
+          }
     }
   }
   
   limitReach(){
-    this.setState({
-    limit:true,
-    prev:this.state.input,
-    input:"LIMIT REACH",
-    message:true
-  })
-
-  setTimeout(()=>(
-    this.setState({
-      input:this.state.prev,
-      message:false,
-      limit:false
-    
-    
+     this.setState({
+     limit:true,
+     prev:this.state.input,
+     input:"LIMIT REACH",
+     message:true
     })
-  ),1000)
 
-
-    }
+    setTimeout(()=>(
+     this.setState({
+       input:this.state.prev,
+       message:false,
+       limit:false
+      })
+    ),1000)
+  }
 
   render(){
 
-   
     return (
       <div id="calculator">
-      <p>
-        {this.state.memory}
-      </p>
+     
        <Display
         input={this.state.input} 
-        output={this.state.output}
-        
-       />
+        output={this.state.output}/>
        
        <Buttons 
         clear={this.clear}
         operator={this.operator}
         evaluate={this.evaluate}
         inputKey={this.inputKey}/>
-       
        
       </div>
     )
@@ -272,11 +272,8 @@ this.setState({
 function App(){
   return <Calculator/>
 }
+
 const root = ReactDOM.createRoot(document.getElementById('root'));
-root.render(
- 
-    <App />
-  
-);
+root.render(<App />)
 
 
